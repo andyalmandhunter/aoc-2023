@@ -2,10 +2,15 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fs;
 
+fn contains_symbol(substr: &&str, start: usize, end: usize) -> bool {
+    substr[start..end]
+        .chars()
+        .find(|c| !c.is_digit(10) && c != &'.')
+        .is_some()
+}
+
 fn find_in_line(line: &str, prev: Option<&&str>, next: Option<&&str>) -> Vec<i32> {
     print!("{line}");
-    // print!("  prev: {:?}", prev);
-    // println!("  next: {:?}", next);
 
     static PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\d+").unwrap());
 
@@ -19,30 +24,18 @@ fn find_in_line(line: &str, prev: Option<&&str>, next: Option<&&str>) -> Vec<i32
                 m.end() + 1
             };
 
-            if line[start..end]
-                .chars()
-                .find(|c| !c.is_digit(10) && c != &'.')
-                .is_some()
-            {
+            if contains_symbol(&line, start, end) {
                 return Some(m.as_str());
             }
 
             if let Some(p) = prev {
-                if p[start..end]
-                    .chars()
-                    .find(|c| !c.is_digit(10) && c != &'.')
-                    .is_some()
-                {
+                if contains_symbol(p, start, end) {
                     return Some(m.as_str());
                 }
             }
 
             if let Some(n) = next {
-                if n[start..end]
-                    .chars()
-                    .find(|c| !c.is_digit(10) && c != &'.')
-                    .is_some()
-                {
+                if contains_symbol(n, start, end) {
                     return Some(m.as_str());
                 }
             }
@@ -71,7 +64,11 @@ fn find_part_numbers(input: &str) -> Vec<i32> {
 
 fn main() {
     let input = fs::read_to_string("input").expect("unable to read input");
+
+    let start = std::time::Instant::now();
     let answer: i32 = find_part_numbers(&input).iter().sum();
+    let duration = start.elapsed();
+    println!("got answer in {:?}", duration);
 
     println!("answer: {answer}");
 }

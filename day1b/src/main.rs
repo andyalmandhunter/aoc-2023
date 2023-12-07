@@ -65,6 +65,10 @@ fn main() {
 
     // let _: Vec<_> = input.lines().map(digits).collect();
 
+    let start = std::time::Instant::now();
     let answer: i32 = input.lines().map(digits).sum();
+    let duration = start.elapsed();
+    println!("got answer in {:?}", duration);
+
     println!("answer: {answer}")
 }

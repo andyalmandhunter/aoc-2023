@@ -27,7 +27,7 @@ fn adjust_locations(locations: &mut Vec<(i64, i64)>) {
         if locations.iter().find(|(x, _)| x == &i).is_none() {
             for (x, _) in locations.iter_mut() {
                 if *x > i {
-                    *x += 1;
+                    *x += 999_999;
                 }
             }
         }
@@ -37,7 +37,7 @@ fn adjust_locations(locations: &mut Vec<(i64, i64)>) {
         if locations.iter().find(|(_, x)| x == &i).is_none() {
             for (_, x) in locations.iter_mut() {
                 if *x > i {
-                    *x += 1;
+                    *x += 999_999;
                 }
             }
         }
@@ -62,9 +62,6 @@ fn main() {
     let input = fs::read_to_string("input").expect("unable to read input");
     let mut locations = get_locations(&input);
     adjust_locations(&mut locations);
-
-    println!("{:?}", locations);
-
     let answer = shortest_distances(&locations);
 
     println!("answer: {answer}");

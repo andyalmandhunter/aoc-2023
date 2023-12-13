@@ -28,7 +28,6 @@ fn possible_arrangements<'a>(
     current_run: u64,
     substr: &'a str,
     groups: &'a [u64],
-    remain: u64,
 ) -> u64 {
     if substr.len() == 0 {
         if groups.len() == 0 && current_run == 0 {
@@ -39,41 +38,19 @@ fn possible_arrangements<'a>(
             return 0;
         }
     }
-    if current_run == 0 && remain < groups.iter().sum() {
-        return 0;
-    }
-
-    // println!("");
-    // println!("remain: {remain}");
-    // println!("substr: {substr}");
-    // println!("remaining groups: {:?}", groups);
-
-    // if (current_run + remain) < groups.iter().sum() {
-    //     // println!("not enough left");
-    //     // println!("");
-    //     // println!("current_run: {current_run}");
-    //     // println!("remain: {remain}");
-    //     // println!("substr: {substr}");
-    //     // println!("remaining groups: {:?}", groups);
-    //     return 0;
-    // }
 
     match substr.chars().next().unwrap() {
         '#' => {
             if groups.len() == 0 || current_run >= groups[0] {
                 0
             } else {
-                possible_arrangements(cache, current_run + 1, &substr[1..], groups, remain - 1)
+                possible_arrangements(cache, current_run + 1, &substr[1..], groups)
             }
         }
         '.' => {
             if current_run == 0 {
-                possible_arrangements(cache, 0, &substr[1..], groups, remain)
+                possible_arrangements(cache, 0, &substr[1..], groups)
             } else if groups.len() != 0 && current_run == groups[0] {
-                // println!("");
-                // println!("substr: {substr}");
-                // println!("remaining groups: {:?}", &groups[1..]);
-
                 let substr_copy: String = substr[1..].chars().collect();
                 let groups_copy: Vec<_> = groups[1..].iter().map(|e| *e).collect();
                 let key = (substr_copy, groups_copy);
@@ -81,7 +58,7 @@ fn possible_arrangements<'a>(
                 if let Some(n) = cache.get(&key) {
                     *n
                 } else {
-                    let m = possible_arrangements(cache, 0, &substr[1..], &groups[1..], remain);
+                    let m = possible_arrangements(cache, 0, &substr[1..], &groups[1..]);
                     cache.put(key, m);
                     m
                 }
@@ -94,8 +71,8 @@ fn possible_arrangements<'a>(
             let a: String = "#".chars().chain(rest.chars()).collect();
             let b: String = ".".chars().chain(rest.chars()).collect();
 
-            possible_arrangements(cache, current_run, &a, groups, remain)
-                + possible_arrangements(cache, current_run, &b, groups, remain - 1)
+            possible_arrangements(cache, current_run, &a, groups)
+                + possible_arrangements(cache, current_run, &b, groups)
         }
         _ => panic!(),
     }
@@ -105,25 +82,12 @@ fn main() {
     let input = fs::read_to_string("input").expect("unable to read input");
     let records: Vec<_> = input.lines().map(parse_record).collect();
 
-    // for r in &records {
-    //     println!("{:?}", r);
-    // }
     let mut cache: LruCache<(String, Vec<u64>), u64> =
         LruCache::new(NonZeroUsize::new(1_000_000_000).unwrap());
 
     let answer: u64 = records
         .iter()
-        .enumerate()
-        .map(|(i, (s, groups))| {
-            // println!("");
-            // println!("{s} {:?}", groups);
-            let start = std::time::Instant::now();
-            let remain = s.chars().filter(|c| c != &'.').count() as u64;
-            let n = possible_arrangements(&mut cache, 0, s, groups, remain);
-            let duration = start.elapsed();
-            println!("row {i} answer: {n} in {:?}", duration);
-            n
-        })
+        .map(|(s, groups)| possible_arrangements(&mut cache, 0, s, groups))
         .sum();
 
     println!("answer: {answer}");

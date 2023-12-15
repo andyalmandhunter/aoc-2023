@@ -1,74 +1,74 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::fs;
+use std::ops::Bound::{Excluded, Included};
+use std::{collections::BTreeMap, fs};
 
-fn contains_symbol(substr: &&str, start: usize, end: usize) -> bool {
-    substr[start..end]
-        .chars()
-        .find(|c| !c.is_digit(10) && c != &'.')
-        .is_some()
+fn get_parts(input: &str, part_symbol: char) -> Vec<(usize, usize)> {
+    input
+        .lines()
+        .enumerate()
+        .flat_map(|(i, line)| {
+            line.chars().enumerate().filter_map(
+                move |(j, c)| {
+                    if c == part_symbol {
+                        Some((i, j))
+                    } else {
+                        None
+                    }
+                },
+            )
+        })
+        .collect()
 }
 
-fn find_in_line(line: &str, prev: Option<&&str>, next: Option<&&str>) -> Vec<i32> {
-    print!("{line}");
-
+fn get_part_numbers(input: &str) -> BTreeMap<(usize, (usize, usize)), u32> {
     static PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\d+").unwrap());
 
-    PATTERN
-        .find_iter(line)
-        .flat_map(|m| {
-            let start = if m.start() < 1 { 0 } else { m.start() - 1 };
-            let end = if m.end() >= line.len() {
-                line.len()
-            } else {
-                m.end() + 1
-            };
+    let mut part_nums = BTreeMap::new();
+    for (i, line) in input.lines().enumerate() {
+        for m in PATTERN.find_iter(line) {
+            let num = m.as_str().parse::<u32>().unwrap();
+            part_nums.insert((i, (m.start(), m.end())), num);
+        }
+    }
 
-            if let Some(p) = prev {
-                if contains_symbol(p, start, end) {
-                    return Some(m.as_str());
-                }
-            }
-
-            if contains_symbol(&line, start, end) {
-                return Some(m.as_str());
-            }
-
-            if let Some(n) = next {
-                if contains_symbol(n, start, end) {
-                    return Some(m.as_str());
-                }
-            }
-
-            None
-        })
-        .map(|s| s.parse::<i32>().unwrap())
-        .collect()
+    part_nums
 }
 
-fn find_part_numbers(input: &str) -> Vec<i32> {
-    let lines: Vec<&str> = input.lines().collect();
-    (0..lines.len())
-        .flat_map(|i| {
-            let line = lines[i];
-            let prev = if i > 0 { lines.get(i - 1) } else { None };
-            let next = lines.get(i + 1);
-
-            let part_numbers = find_in_line(line, prev, next);
-            println!("  part numbers: {:?}", part_numbers);
-
-            part_numbers
+fn maybe_gear_ratio(
+    part_nums: &BTreeMap<(usize, (usize, usize)), u32>,
+    gear: &(usize, usize),
+) -> Option<u32> {
+    let (i, j) = gear;
+    let min_i = if i > &0 { i - 1 } else { 0 };
+    let adjacent_nums: Vec<_> = part_nums
+        .range((Included((min_i, (0, 0))), Excluded((i + 2, (0, 0)))))
+        .filter_map(|((_, (n, m)), part_num)| {
+            if (&(n + 1) >= j && n <= &(j + 1)) || (m >= j && m <= &(j + 2)) {
+                Some(part_num)
+            } else {
+                None
+            }
         })
-        .collect()
+        .collect();
+
+    if adjacent_nums.len() == 2 {
+        println!("found gear: {:?}", (i, j));
+        Some(adjacent_nums.iter().map(|n| **n).product())
+    } else {
+        None
+    }
 }
 
 fn main() {
     let input = fs::read_to_string("input").expect("unable to read input");
+    let maybe_gears = get_parts(&input, '*');
+    let part_numbers = get_part_numbers(&input);
 
-    let start = std::time::Instant::now();
-    let answer: i32 = find_part_numbers(&input).iter().sum();
-    let duration = start.elapsed();
-    println!("got answer in {:?}", duration);
+    let answer: u32 = maybe_gears
+        .iter()
+        .filter_map(|g| maybe_gear_ratio(&part_numbers, g))
+        .sum();
 
     println!("answer: {answer}");
 }

@@ -1,0 +1,102 @@
+#+title: Notes
+Periods:
+
+mj
+
+| 2048 |
+|    1 |
+|  128 |
+| 1024 |
+|  512 |
+|    8 |
+|   16 |
+
+|    1 |
+|    8 |
+|   16 |
+|  128 |
+|  512 |
+| 1024 |
+| 2048 |
+
+qs
+
+|  128 |
+|    1 |
+| 1024 |
+| 2048 |
+|   32 |
+|  512 |
+|  256 |
+
+|    1 |
+|   32 |
+|  128 |
+|  256 |
+|  512 |
+| 1024 |
+| 2048 |
+
+rd
+
+|   32 |
+| 2048 |
+|   64 |
+|    1 |
+|  512 |
+|    2 |
+|    4 |
+| 1024 |
+
+|    1 |
+|    2 |
+|    4 |
+|   32 |
+|   64 |
+|  512 |
+| 1024 |
+| 2048 |
+
+cs
+
+|    8 |
+|    1 |
+|  128 |
+|    4 |
+|   64 |
+| 2048 |
+| 1024 |
+|   32 |
+|  512 |
+
+|    1 |
+|    4 |
+|    8 |
+|   32 |
+|   64 |
+|  128 |
+|  512 |
+| 1024 |
+| 2048 |
+
+We need "bt" etc. all to be L at the same time, which means we need all of the
+elements of "mj" etc. to be H at the same time.
+
+These are all powers of 2, so this is like a large binary number that we need to
+come up all 1's at the same time.
+
+Some places are repeated ... but I think we can ignore the repeats.
+
+...
+
+cs
+
+- At 2048, the 2048 one is finally H but all the others are L. So at 4095 everything should be H, right?
+
+- Nope. Something happens at 3072, which is 2048 + 1024. So this one ("md") goes:
+
+  L for 2048
+  H for 1024
+  L for 2796 (2048 + 748) ... huh
+
+- So, something happens at 5869 ... which is prime

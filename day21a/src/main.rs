@@ -1,4 +1,7 @@
-use std::{collections::HashSet, fs};
+use std::{
+    collections::{BTreeSet, HashSet},
+    fs,
+};
 
 fn parse_input(input: &str) -> Vec<Vec<bool>> {
     input
@@ -29,46 +32,36 @@ fn find_start(input: &str) -> Option<(usize, usize)> {
 
 fn count_reachable_points(map: &Vec<Vec<bool>>, start: (usize, usize), steps: usize) -> usize {
     let mut count_reachable = 0;
-    let mut visited: HashSet<((usize, usize), usize)> = HashSet::new();
-    let mut unvisited: Vec<((usize, usize), usize)> = Vec::new();
-    unvisited.push((start, steps));
+    let mut visited: HashSet<(usize, usize)> = HashSet::new();
+    let mut unvisited: BTreeSet<(usize, (usize, usize))> = BTreeSet::new();
+    unvisited.insert((steps, start));
 
-    while let Some(((i, j), s)) = unvisited.pop() {
-        if visited.contains(&((i, j), s)) {
-            continue;
+    while let Some((s, (i, j))) = unvisited.pop_last() {
+        visited.insert((i, j));
+
+        if s % 2 == 0 {
+            count_reachable += 1;
         }
-
-        visited.insert(((i, j), s));
 
         if s == 0 {
-            count_reachable += 1;
             continue;
         }
 
-        let up = i.checked_sub(1).and_then(|k| {
-            map.get(k).and_then(|row| {
-                row.get(j)
-                    .and_then(|s| if *s { Some((k, j)) } else { None })
-            })
-        });
-        let down = map.get(i + 1).and_then(|row| {
-            row.get(j)
-                .and_then(|s| if *s { Some((i + 1, j)) } else { None })
-        });
-        let right = map.get(i).and_then(|row| {
-            row.get(j + 1)
-                .and_then(|s| if *s { Some((i, j + 1)) } else { None })
-        });
-        let left = map.get(i).and_then(|row| {
-            j.checked_sub(1).and_then(|l| {
-                row.get(l)
-                    .and_then(|s| if *s { Some((i, l)) } else { None })
-            })
-        });
+        let up = i.checked_sub(1).map(|k| (k, j));
+        let down = Some((i + 1, j));
+        let right = Some((i, j + 1));
+        let left = j.checked_sub(1).map(|l| (i, l));
 
         for (k, l) in [up, down, left, right].iter().flatten() {
-            let next = ((*k, *l), s - 1);
-            unvisited.push(next);
+            if let Some(row) = map.get(*k) {
+                if let Some(tile) = row.get(*l) {
+                    if *tile {
+                        if !visited.contains(&(*k, *l)) {
+                            unvisited.insert((s - 1, (*k, *l)));
+                        }
+                    }
+                }
+            }
         }
     }
 
